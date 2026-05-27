@@ -179,7 +179,6 @@ img, video { max-width: 100%; }
 }
 .title-link:active { background: rgba(244,212,136,0.18); }
 .title-link .tl-dur { color: var(--gold); font-size: 0.9rem; flex: none; }
-.title-link::after { content: "▶"; color: var(--gold); margin-left: 0.4rem; }
 
 /* ---------- Modal ---------- */
 .modal-overlay {
@@ -238,7 +237,6 @@ img, video { max-width: 100%; }
   gap: 0.6rem;
   color: var(--ink-dim);
 }
-.placeholder-icon { font-size: 3rem; color: var(--gold); }
 
 .modal-body { padding: 1.4rem 1.6rem 1.8rem; }
 .modal-title { margin: 0; color: var(--gold-bright); font-size: clamp(1.3rem, 3vw, 1.8rem); }
