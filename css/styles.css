@@ -1,0 +1,301 @@
+/* ============================================================
+   Interactive Sacred Art Exhibit
+   Works in two configs from one codebase:
+     - Kiosk mode  (body[data-mode="kiosk"])  — large touch targets, attract loop
+     - Web mode    (default / responsive)     — desktop + mobile
+   ============================================================ */
+
+:root {
+  --bg:            #0e0c0a;
+  --bg-2:          #1a1611;
+  --gold:          #d8b25c;
+  --gold-bright:   #f4d488;
+  --ink:           #f3ead8;
+  --ink-dim:       #b9ad95;
+  --hotspot:       #f4d488;
+  --modal-bg:      #14110d;
+  --radius:        14px;
+  --touch:         64px;   /* minimum touch target */
+  --max-w:         1200px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: radial-gradient(circle at 50% 0%, var(--bg-2), var(--bg) 70%);
+  color: var(--ink);
+  font-family: "Georgia", "Times New Roman", serif;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+body { overflow-x: hidden; }
+
+img, video { max-width: 100%; }
+
+.loader {
+  display: grid;
+  place-items: center;
+  height: 100vh;
+  color: var(--ink-dim);
+  font-size: 1.2rem;
+  letter-spacing: 0.04em;
+}
+
+/* ---------- Layout ---------- */
+#app { min-height: 100vh; }
+
+.exhibit-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 1.2rem 1.4rem 0.4rem;
+}
+
+.exhibit-title {
+  margin: 0;
+  font-size: clamp(1.4rem, 4vw, 2.4rem);
+  font-weight: 600;
+  color: var(--gold-bright);
+  letter-spacing: 0.02em;
+}
+.exhibit-meta { margin: 0.15rem 0 0; color: var(--ink-dim); font-size: 0.95rem; font-style: italic; }
+
+.exhibit-intro {
+  max-width: 760px;
+  margin: 0.3rem auto 0.8rem;
+  padding: 0 1.4rem;
+  text-align: center;
+  color: var(--ink-dim);
+  line-height: 1.5;
+  font-size: clamp(0.95rem, 2.2vw, 1.05rem);
+}
+
+.btn-fullscreen {
+  flex: none;
+  width: 48px; height: 48px;
+  border: 1px solid rgba(216,178,92,0.4);
+  background: rgba(255,255,255,0.04);
+  color: var(--gold);
+  border-radius: 10px;
+  font-size: 1.3rem;
+  cursor: pointer;
+}
+.btn-fullscreen:hover { background: rgba(216,178,92,0.15); }
+
+/* ---------- Stage / painting ---------- */
+.stage {
+  display: grid;
+  place-items: center;
+  padding: 0.5rem 1rem 2rem;
+}
+
+.frame {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+  max-width: min(100%, 720px);
+  box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+  border: 6px solid #2a2118;
+  border-radius: 4px;
+}
+
+.painting {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* ---------- Hotspots ---------- */
+.hotspots {
+  position: absolute;
+  inset: 0;
+}
+
+/* SVG polygon overlay (traced in Figma) */
+.hotspot-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.hotspot-poly {
+  fill: rgba(244,212,136,0.10);
+  stroke: rgba(244,212,136,0.75);
+  stroke-width: 3;
+  cursor: pointer;
+  transition: fill 0.2s, stroke 0.2s;
+  animation: polyPulse 2.6s ease-in-out infinite;
+}
+.hotspot-poly:hover,
+.hotspot-poly:focus-visible {
+  fill: rgba(244,212,136,0.32);
+  stroke: var(--gold-bright);
+  outline: none;
+}
+@keyframes polyPulse {
+  0%, 100% { stroke-opacity: 0.55; }
+  50%      { stroke-opacity: 1; }
+}
+
+/* ---------- Mobile title bar ---------- */
+.title-bar { display: none; }
+
+.title-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 1rem 2rem;
+  max-width: var(--max-w);
+  margin-inline: auto;
+}
+.title-list li { margin: 0; }
+
+.title-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 1rem;
+  padding: 1.1rem 1.2rem;
+  margin-bottom: 0.6rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(216,178,92,0.25);
+  border-radius: var(--radius);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 1.05rem;
+  text-align: left;
+  cursor: pointer;
+  min-height: var(--touch);
+}
+.title-link:active { background: rgba(244,212,136,0.18); }
+.title-link .tl-dur { color: var(--gold); font-size: 0.9rem; flex: none; }
+.title-link::after { content: "▶"; color: var(--gold); margin-left: 0.4rem; }
+
+/* ---------- Modal ---------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.82);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  z-index: 100;
+  animation: fade 0.2s ease;
+}
+.modal-overlay[hidden] { display: none; }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+.modal {
+  position: relative;
+  width: min(900px, 100%);
+  max-height: 92vh;
+  overflow: auto;
+  background: var(--modal-bg);
+  border: 1px solid rgba(216,178,92,0.3);
+  border-radius: var(--radius);
+  box-shadow: 0 30px 80px rgba(0,0,0,0.7);
+}
+
+.modal-close {
+  position: absolute;
+  top: 10px; right: 10px;
+  width: 52px; height: 52px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.55);
+  color: var(--ink);
+  font-size: 1.4rem;
+  cursor: pointer;
+  z-index: 2;
+}
+.modal-close:hover { background: rgba(244,212,136,0.25); }
+
+.modal-video-wrap {
+  position: relative;
+  background: #000;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius) var(--radius) 0 0;
+  overflow: hidden;
+}
+.modal-video { width: 100%; height: 100%; object-fit: contain; background:#000; }
+
+.modal-video-placeholder {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0.6rem;
+  color: var(--ink-dim);
+}
+.placeholder-icon { font-size: 3rem; color: var(--gold); }
+
+.modal-body { padding: 1.4rem 1.6rem 1.8rem; }
+.modal-title { margin: 0; color: var(--gold-bright); font-size: clamp(1.3rem, 3vw, 1.8rem); }
+.modal-duration { margin: 0.2rem 0 1rem; color: var(--gold); font-size: 0.9rem; letter-spacing: 0.05em; }
+.modal-text { margin: 0; line-height: 1.65; font-size: 1.05rem; color: var(--ink); }
+
+/* ---------- Attract / idle screen ---------- */
+.attract {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: radial-gradient(circle at 50% 40%, rgba(40,32,20,0.96), rgba(8,7,5,0.99));
+  display: grid;
+  place-items: center;
+  text-align: center;
+  cursor: pointer;
+}
+.attract[hidden] { display: none; }
+.attract-title { font-size: clamp(2rem, 7vw, 4.5rem); color: var(--gold-bright); margin: 0; }
+.attract-subtitle { font-size: clamp(1rem, 3vw, 1.6rem); color: var(--ink-dim); font-style: italic; margin: 0.6rem 0 2.4rem; }
+.attract-prompt { font-size: clamp(1.1rem, 3.5vw, 2rem); color: var(--ink); margin: 0; letter-spacing: 0.03em; }
+.attract-touch { display: block; font-size: 3rem; margin-top: 1.2rem; animation: bob 1.6s ease-in-out infinite; }
+@keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-14px); } }
+
+/* ============================================================
+   RESPONSIVE: switch to mobile title-bar layout on narrow / coarse
+   pointer devices. Hotspots become hard to tap on phones, so we
+   hide them and show the list of titles instead (per spec).
+   ============================================================ */
+@media (max-width: 640px) {
+  .hotspots { display: none; }
+  .title-bar { display: block; }
+  .frame { pointer-events: none; }   /* painting becomes a static image */
+  .exhibit-header { padding-top: 1rem; }
+}
+
+/* ============================================================
+   KIOSK MODE — larger everything, hide chrome, no text selection
+   ============================================================ */
+body[data-mode="kiosk"] {
+  cursor: none;                 /* hide mouse cursor on kiosk */
+  user-select: none;
+  -webkit-user-select: none;
+}
+body[data-mode="kiosk"] .btn-fullscreen { display: none; }
+body[data-mode="kiosk"] .frame { max-width: min(100%, 900px); }
+body[data-mode="kiosk"] .hotspot-poly { stroke-width: 4; }
+body[data-mode="kiosk"] .modal { width: min(1100px, 100%); }
+body[data-mode="kiosk"] .modal-text { font-size: 1.3rem; }
+body[data-mode="kiosk"] .exhibit-intro { font-size: 1.2rem; }
+/* In kiosk we keep hotspots even on smaller widths (vertical monitor) */
+@media (max-width: 640px) {
+  body[data-mode="kiosk"] .hotspots { display: block; }
+  body[data-mode="kiosk"] .title-bar { display: none; }
+  body[data-mode="kiosk"] .frame { pointer-events: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .attract-touch, .hotspot-poly { animation: none; }
+}
