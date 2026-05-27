@@ -1,6 +1,6 @@
 /* Offline-first cache for kiosk reliability.
    Bump CACHE_VERSION whenever you update content/code to force a refresh. */
-const CACHE_VERSION = "exhibit-v3";
+const CACHE_VERSION = "exhibit-v4";
 
 const CORE_ASSETS = [
   "./",

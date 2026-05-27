@@ -133,13 +133,21 @@ img, video { max-width: 100%; }
   stroke: rgba(244,212,136,0.75);
   stroke-width: 3;
   cursor: pointer;
-  transition: fill 0.2s, stroke 0.2s;
+  opacity: 1;
+  transition: fill 0.2s, stroke 0.2s, opacity 0.25s;
   animation: polyPulse 2.6s ease-in-out infinite;
 }
-.hotspot-poly:hover,
-.hotspot-poly:focus-visible {
+/* While one region is hovered/focused, the rest fade back. With nothing
+   hovered, all regions return to their normal (pulsing) state. */
+.hotspot-svg:hover .hotspot-poly,
+.hotspot-svg:focus-within .hotspot-poly {
+  opacity: 0.12;
+}
+.hotspot-svg:hover .hotspot-poly:hover,
+.hotspot-svg:focus-within .hotspot-poly:focus-visible {
   fill: rgba(244,212,136,0.32);
   stroke: var(--gold-bright);
+  opacity: 1;
   outline: none;
 }
 @keyframes polyPulse {
